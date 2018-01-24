@@ -15,14 +15,6 @@
  */
 package org.apache.ibatis.executor;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.executor.statement.StatementHandler;
 import org.apache.ibatis.logging.Log;
@@ -33,7 +25,19 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
+ * ReuseExecutor和SimpleExecutor很像，只是ReuseExecutor会缓存编译后的Statement对象
+ * 优点：减少一次与数据库的编译请求
+ * 缺点：statementMap是个hashMap，强引用会占内存
+ *
  * @author Clinton Begin
  */
 public class ReuseExecutor extends BaseExecutor {
@@ -77,6 +81,14 @@ public class ReuseExecutor extends BaseExecutor {
     return Collections.emptyList();
   }
 
+  /**
+   * 将编译后的Statement会缓存
+   *
+   * @param handler
+   * @param statementLog
+   * @return
+   * @throws SQLException
+     */
   private Statement prepareStatement(StatementHandler handler, Log statementLog) throws SQLException {
     Statement stmt;
     BoundSql boundSql = handler.getBoundSql();

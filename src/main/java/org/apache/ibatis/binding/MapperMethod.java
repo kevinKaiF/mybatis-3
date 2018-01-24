@@ -288,7 +288,9 @@ public class MapperMethod {
       this.returnsCursor = Cursor.class.equals(this.returnType);
       this.mapKey = getMapKey(method);
       this.returnsMap = (this.mapKey != null);
+      // DAO方法参数有RowBounds对象参数
       this.rowBoundsIndex = getUniqueParamIndex(method, RowBounds.class);
+      // DAO方法参数有ResultHandler对象参数
       this.resultHandlerIndex = getUniqueParamIndex(method, ResultHandler.class);
       this.paramNameResolver = new ParamNameResolver(configuration, method);
     }

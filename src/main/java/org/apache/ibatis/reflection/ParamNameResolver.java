@@ -16,18 +16,18 @@
 
 package org.apache.ibatis.reflection;
 
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.binding.MapperMethod.ParamMap;
+import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.session.ResultHandler;
+import org.apache.ibatis.session.RowBounds;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
-
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.binding.MapperMethod.ParamMap;
-import org.apache.ibatis.session.Configuration;
-import org.apache.ibatis.session.ResultHandler;
-import org.apache.ibatis.session.RowBounds;
 
 public class ParamNameResolver {
 
@@ -56,6 +56,7 @@ public class ParamNameResolver {
     final SortedMap<Integer, String> map = new TreeMap<Integer, String>();
     int paramCount = paramAnnotations.length;
     // get names from @Param annotations
+    // 解析使用@Param注解方法的参数
     for (int paramIndex = 0; paramIndex < paramCount; paramIndex++) {
       if (isSpecialParameter(paramTypes[paramIndex])) {
         // skip special parameters
@@ -86,6 +87,7 @@ public class ParamNameResolver {
   }
 
   private String getActualParamName(Method method, int paramIndex) {
+    // 如果是jdk 1.8
     if (Jdk.parameterExists) {
       return ParamNameUtil.getParamNames(method).get(paramIndex);
     }
@@ -111,6 +113,8 @@ public class ParamNameResolver {
    * ...).
    * </p>
    */
+  // 解析DAO传递的参数，如果是多个参数解析为map
+  // 一个参数解析为Object，可能传入的参数是个对象
   public Object getNamedParams(Object[] args) {
     final int paramCount = names.size();
     if (args == null || paramCount == 0) {
@@ -121,6 +125,7 @@ public class ParamNameResolver {
       final Map<String, Object> param = new ParamMap<Object>();
       int i = 0;
       for (Map.Entry<Integer, String> entry : names.entrySet()) {
+        // key:参数名，value:entry.getKey为下标
         param.put(entry.getValue(), args[entry.getKey()]);
         // add generic param names (param1, param2, ...)
         final String genericParamName = GENERIC_NAME_PREFIX + String.valueOf(i + 1);
