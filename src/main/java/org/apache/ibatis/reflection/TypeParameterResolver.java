@@ -45,6 +45,7 @@ public class TypeParameterResolver {
    *         they will be resolved to the actual runtime {@link Type}s.
    */
   public static Type resolveReturnType(Method method, Type srcType) {
+    // getGenericReturnType如果没有泛型就返回原始类型getReturnType
     Type returnType = method.getGenericReturnType();
     Class<?> declaringClass = method.getDeclaringClass();
     return resolveType(returnType, srcType, declaringClass);

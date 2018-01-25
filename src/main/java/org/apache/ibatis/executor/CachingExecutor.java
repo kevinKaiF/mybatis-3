@@ -33,6 +33,8 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
 /**
+ * 二级缓存
+ *
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
@@ -92,9 +94,12 @@ public class CachingExecutor implements Executor {
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql)
       throws SQLException {
+    // 这个cache是MappedStatement自己定义的cache
+    // 因为MappedStatement是单例的，而sqlSession未必是单例的，即所有的sqlSession共享一份Cache，实现了对同一个mapper的全局缓存
     Cache cache = ms.getCache();
     if (cache != null) {
       flushCacheIfRequired(ms);
+      // 如果statement启用缓存，且resultHandler为null(自定义的resultHandler没有缓存的意义)
       if (ms.isUseCache() && resultHandler == null) {
         ensureNoOutParams(ms, parameterObject, boundSql);
         @SuppressWarnings("unchecked")

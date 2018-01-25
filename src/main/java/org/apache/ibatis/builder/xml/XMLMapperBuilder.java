@@ -15,37 +15,20 @@
  */
 package org.apache.ibatis.builder.xml;
 
-import java.io.InputStream;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import org.apache.ibatis.builder.BaseBuilder;
-import org.apache.ibatis.builder.BuilderException;
-import org.apache.ibatis.builder.CacheRefResolver;
-import org.apache.ibatis.builder.IncompleteElementException;
-import org.apache.ibatis.builder.MapperBuilderAssistant;
-import org.apache.ibatis.builder.ResultMapResolver;
+import org.apache.ibatis.builder.*;
 import org.apache.ibatis.cache.Cache;
 import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.io.Resources;
-import org.apache.ibatis.mapping.Discriminator;
-import org.apache.ibatis.mapping.ParameterMapping;
-import org.apache.ibatis.mapping.ParameterMode;
-import org.apache.ibatis.mapping.ResultFlag;
-import org.apache.ibatis.mapping.ResultMap;
-import org.apache.ibatis.mapping.ResultMapping;
+import org.apache.ibatis.mapping.*;
 import org.apache.ibatis.parsing.XNode;
 import org.apache.ibatis.parsing.XPathParser;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
+
+import java.io.InputStream;
+import java.io.Reader;
+import java.util.*;
 
 /**
  * @author Clinton Begin
@@ -89,6 +72,7 @@ public class XMLMapperBuilder extends BaseBuilder {
 
   public void parse() {
     if (!configuration.isResourceLoaded(resource)) {
+      // 解析mapper.xml文件的配置
       configurationElement(parser.evalNode("/mapper"));
       configuration.addLoadedResource(resource);
       bindMapperForNamespace();
@@ -105,16 +89,23 @@ public class XMLMapperBuilder extends BaseBuilder {
 
   private void configurationElement(XNode context) {
     try {
+      // 解析namespace标签
       String namespace = context.getStringAttribute("namespace");
       if (namespace == null || namespace.equals("")) {
         throw new BuilderException("Mapper's namespace cannot be empty");
       }
       builderAssistant.setCurrentNamespace(namespace);
+      // 解析cache-ref标签
       cacheRefElement(context.evalNode("cache-ref"));
+      // 解析cache标签
       cacheElement(context.evalNode("cache"));
+      // 解析parameterMap标签
       parameterMapElement(context.evalNodes("/mapper/parameterMap"));
+      // 解析resultMap标签
       resultMapElements(context.evalNodes("/mapper/resultMap"));
+      // 解析sql标签标签
       sqlElement(context.evalNodes("/mapper/sql"));
+      // 解析select,insert,update,delete标签
       buildStatementFromContext(context.evalNodes("select|insert|update|delete"));
     } catch (Exception e) {
       throw new BuilderException("Error parsing Mapper XML. Cause: " + e, e);

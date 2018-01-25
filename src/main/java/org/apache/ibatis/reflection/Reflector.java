@@ -15,32 +15,21 @@
  */
 package org.apache.ibatis.reflection;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.ReflectPermission;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.apache.ibatis.reflection.invoker.GetFieldInvoker;
 import org.apache.ibatis.reflection.invoker.Invoker;
 import org.apache.ibatis.reflection.invoker.MethodInvoker;
 import org.apache.ibatis.reflection.invoker.SetFieldInvoker;
 import org.apache.ibatis.reflection.property.PropertyNamer;
 
+import java.lang.reflect.*;
+import java.util.*;
+import java.util.Map.Entry;
+
 /**
  * This class represents a cached set of class definition information that
  * allows for easy mapping between property names and getter/setter methods.
+ *
+ * 一个class的反射器
  *
  * @author Clinton Begin
  */
@@ -61,11 +50,17 @@ public class Reflector {
 
   public Reflector(Class<?> clazz) {
     type = clazz;
+    // 解析默认的构造方法
     addDefaultConstructor(clazz);
+    // 解析get方法
     addGetMethods(clazz);
+    // 解析set方法
     addSetMethods(clazz);
+    // 解析属性
     addFields(clazz);
+    // get方法属性名
     readablePropertyNames = getMethods.keySet().toArray(new String[getMethods.keySet().size()]);
+    // set方法属性名
     writeablePropertyNames = setMethods.keySet().toArray(new String[setMethods.keySet().size()]);
     for (String propName : readablePropertyNames) {
       caseInsensitivePropertyMap.put(propName.toUpperCase(Locale.ENGLISH), propName);
@@ -94,6 +89,7 @@ public class Reflector {
   }
 
   private void addGetMethods(Class<?> cls) {
+    // 记录每个属性名，对应的方法名，可能存在方法重载的情况
     Map<String, List<Method>> conflictingGetters = new HashMap<String, List<Method>>();
     Method[] methods = getClassMethods(cls);
     for (Method method : methods) {
@@ -103,6 +99,7 @@ public class Reflector {
       String name = method.getName();
       if ((name.startsWith("get") && name.length() > 3)
           || (name.startsWith("is") && name.length() > 2)) {
+        // 解析方法名对应的属性名
         name = PropertyNamer.methodToProperty(name);
         addMethodConflict(conflictingGetters, name, method);
       }

@@ -40,9 +40,13 @@ public class TransactionalCache implements Cache {
 
   private static final Log log = LogFactory.getLog(TransactionalCache.class);
 
+  // 委托的cache
   private Cache delegate;
+  // 是否已经clear
   private boolean clearOnCommit;
+  // 需要添加到delegate的缓存，不过只是在commit的时候才添加到delegate中
   private Map<Object, Object> entriesToAddOnCommit;
+  // 未命中的缓存key
   private Set<Object> entriesMissedInCache;
 
   public TransactionalCache(Cache delegate) {
@@ -66,6 +70,7 @@ public class TransactionalCache implements Cache {
   public Object getObject(Object key) {
     // issue #116
     Object object = delegate.getObject(key);
+    // 如果二级缓存未命中就记录到entriesMissedInCache
     if (object == null) {
       entriesMissedInCache.add(key);
     }
@@ -94,15 +99,20 @@ public class TransactionalCache implements Cache {
 
   @Override
   public void clear() {
+    // 更新为已经clear
     clearOnCommit = true;
+    // 清理需要添加的缓存数据
     entriesToAddOnCommit.clear();
   }
 
   public void commit() {
+    // 如果clear了，需要将缓存清空
     if (clearOnCommit) {
       delegate.clear();
     }
+    // commit的时候，将entriesToAddOnCommit添加到缓存delegate
     flushPendingEntries();
+    // 重置缓存的状态
     reset();
   }
 

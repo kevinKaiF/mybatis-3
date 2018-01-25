@@ -50,7 +50,7 @@ public class XMLStatementBuilder extends BaseBuilder {
   }
 
   /**
-   * 解析select,update,insert,delete标签
+   * 解析select,update,insert,delete标签，添加到mappedStatement
    */
   public void parseStatementNode() {
     String id = context.getStringAttribute("id");

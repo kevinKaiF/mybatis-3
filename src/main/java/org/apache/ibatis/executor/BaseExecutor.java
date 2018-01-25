@@ -52,6 +52,7 @@ public abstract class BaseExecutor implements Executor {
 
   protected ConcurrentLinkedQueue<DeferredLoad> deferredLoads;
   protected PerpetualCache localCache;
+  // callable的参数缓存
   protected PerpetualCache localOutputParameterCache;
   protected Configuration configuration;
 
@@ -128,6 +129,7 @@ public abstract class BaseExecutor implements Executor {
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler) throws SQLException {
     BoundSql boundSql = ms.getBoundSql(parameter);
+    // 生成缓存key,以hashCode生成
     CacheKey key = createCacheKey(ms, parameter, rowBounds, boundSql);
     return query(ms, parameter, rowBounds, resultHandler, key, boundSql);
  }
@@ -145,6 +147,7 @@ public abstract class BaseExecutor implements Executor {
     List<E> list;
     try {
       queryStack++;
+      // 本地缓存，所谓的一级缓存
       list = resultHandler == null ? (List<E>) localCache.getObject(key) : null;
       if (list != null) {
         handleLocallyCachedOutputParameters(ms, key, parameter, boundSql);
@@ -229,18 +232,32 @@ public abstract class BaseExecutor implements Executor {
     return localCache.getObject(key) != null;
   }
 
+  /**
+   * commit的时候会清理本地缓存
+   *
+   * @param required
+   * @throws SQLException
+     */
   @Override
   public void commit(boolean required) throws SQLException {
     if (closed) {
       throw new ExecutorException("Cannot commit, transaction is already closed");
     }
+    // 清除查询结果缓存
     clearLocalCache();
+    // 清除编译statement缓存
     flushStatements();
     if (required) {
       transaction.commit();
     }
   }
 
+  /**
+   * 回滚的时候也需要清除本地缓存
+   *
+   * @param required
+   * @throws SQLException
+     */
   @Override
   public void rollback(boolean required) throws SQLException {
     if (!closed) {
